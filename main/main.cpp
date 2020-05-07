@@ -86,7 +86,7 @@ void loadSong(void)
         serialInBuffer[serialCount] = '\0';
 
         song[i] = (int) atoi(serialInBuffer);
-        printf("song %d\r\n",song[i] );
+        
         serialCount = 0;
 
         i++;
@@ -117,7 +117,7 @@ void loadSong(void)
         serialInBuffer[serialCount] = '\0';
 
         noteLength[i] = (int) atoi(serialInBuffer);
-        printf("length %d\r\n",noteLength[i] );
+        
         serialCount = 0;
 
         i++;
@@ -128,15 +128,19 @@ void loadSong(void)
 
   }
 
+  
+
+
 
 
  green_led = 1;
-
+play=1;
 }
 
 void loadSongHandler(void) {
-play=1;
-//queue.call(loadSong);
+
+queue.call(loadSong);
+
 }
 
 
@@ -240,7 +244,7 @@ void ini_playNote(void) {
 
 
 
-int song1[]= {
+/*int song1[]= {
 
   261, 261, 392, 392, 440, 440, 392,
 
@@ -267,7 +271,7 @@ int noteLength1[] = {
 
   1, 1, 1, 1, 1, 1, 2,
 
-  1, 1, 1, 1, 1, 1, 2};
+  1, 1, 1, 1, 1, 1, 2};*/
 
 
 
@@ -277,7 +281,7 @@ int noteLength1[] = {
 int main(void)
 {
   green_led = 1;
-  //queue.call(printf, "called immediately\r\n");
+  
   
   t.start(callback(&queue, &EventQueue::dispatch_forever));
 
@@ -288,17 +292,23 @@ int main(void)
   {
       if(play==1)
       {
+        for(int i=0;i<42;i++)
+        {
+          printf("song %d\r\n",song[i] );
+          printf("length %d\r\n",noteLength[i] );
+
+        }
         
         for(int i = 0; i < 42; i++)
         {
 
-          int length = noteLength1[i];
+          int length = noteLength[i];
 
           while(length--)
 
           { 
       
-            queue.call(playNote, song1[i]);  
+            queue.call(playNote, song[i]);  
 
             if(length <= 1) wait(1.0);
 

@@ -13,9 +13,9 @@
     {
         "module": "[fill]",
         "size": {
-            ".text": 216,
+            ".text": 214,
             ".data": 7,
-            ".bss": 44,
+            ".bss": 48,
             ".text-delta": 0,
             ".data-delta": 0,
             ".bss-delta": 0
@@ -24,7 +24,7 @@
     {
         "module": "[lib]/c.a",
         "size": {
-            ".text": 22147,
+            ".text": 31361,
             ".data": 2472,
             ".bss": 89,
             ".text-delta": 0,
@@ -68,9 +68,9 @@
     {
         "module": "main.o",
         "size": {
-            ".text": 1102,
-            ".data": 336,
-            ".bss": 2502,
+            ".text": 1414,
+            ".data": 0,
+            ".bss": 2874,
             ".text-delta": 0,
             ".data-delta": 0,
             ".bss-delta": 0
@@ -90,7 +90,7 @@
     {
         "module": "mbed-os/drivers",
         "size": {
-            ".text": 1274,
+            ".text": 1308,
             ".data": 0,
             ".bss": 0,
             ".text-delta": 0,
@@ -123,7 +123,7 @@
     {
         "module": "mbed-os/platform",
         "size": {
-            ".text": 6174,
+            ".text": 6210,
             ".data": 261,
             ".bss": 309,
             ".text-delta": 0,
@@ -155,9 +155,9 @@
     },
     {
         "summary": {
-            "static_ram": 13976,
+            "static_ram": 14016,
             "static_ram_delta": 0,
-            "total_flash": 70132,
+            "total_flash": 79390,
             "total_flash_delta": 0
         }
     }
