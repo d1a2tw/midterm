@@ -30,7 +30,7 @@ int noteLength[42];
 int songname;
 int play=0;
 int idC = 0;
-
+int playindex = 0;
 
 //int16_t signal[signalLength];
 
@@ -175,12 +175,21 @@ play=1;
 
 void loadSongHandler(void) 
 {
-
+playindex=1;         //index = load which song
+printf("%d\r\n",playindex);
+wait(0.1);
 queue.call(loadSong);
 
 }
 
+void loadSongHandler1(void) 
+{
+playindex=2;         //index = load which song
+printf("%d\r\n",playindex);
+wait(0.1);
+queue.call(loadSong);
 
+}
 
 
 void playNote(int freq)
@@ -226,6 +235,7 @@ int main(void)
 
   button.rise(queue.event(loadSongHandler));
 
+  keyboard0.rise(queue.event(loadSongHandler1));
   while(1)
   {
       if(play==1)
@@ -234,8 +244,8 @@ int main(void)
 
         for(int i=0;i<42;i++)
         {
-          printf("song %d\r\n",song[i] );
-          printf("length %d\r\n",noteLength[i] );
+         // printf("song %d\r\n",song[i] );
+         // printf("length %d\r\n",noteLength[i] );
 
         }
         
