@@ -23,9 +23,11 @@ noteLength = [
   1, 1, 1, 1, 1, 1, 2,
   1, 1, 1, 1, 1, 1, 2 ]
 
+songname= 35
 
 # output formatter
 formatter = lambda x: "%.3d" % x
+
 
 # send the waveform table to K66F
 serdev = '/dev/ttyACM0'
@@ -43,6 +45,9 @@ for data in noteLength:
   s.write(bytes(formatter(data), 'UTF-8'))
   time.sleep(waitTime)
 
+print("Sending song index ...")
+s.write(bytes(formatter(songname), 'UTF-8'))
+time.sleep(waitTime)
 
 s.close()
 print("Signal sended")

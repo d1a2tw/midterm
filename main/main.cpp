@@ -1,7 +1,7 @@
 #include "mbed.h"
 #include <cmath>
 #include "DA7212.h"
-
+#include "uLCD_4DGL.h"
 DA7212 audio;
 
 
@@ -17,15 +17,17 @@ InterruptIn keyboard0(SW3);
 
 DigitalOut green_led(LED2);
 
+uLCD_4DGL uLCD(D1, D0, D2);
 
 int16_t waveform[kAudioTxBufferSize];
 Serial pc(USBTX, USBRX);
 EventQueue queue(32 * EVENTS_EVENT_SIZE);
 Thread t;
 
+
 int song[42] ;
 int noteLength[42];
-
+int songname;
 int play=0;
 int idC = 0;
 
@@ -117,6 +119,40 @@ void loadSong(void)
         serialInBuffer[serialCount] = '\0';
 
         noteLength[i] = (int) atoi(serialInBuffer);
+
+        serialCount = 0;
+
+        i++;
+
+      }
+
+    }
+
+  }
+
+  i=0;
+  while( i < 1)
+
+  {
+  
+    
+    if(pc.readable())
+
+    {
+
+      serialInBuffer[serialCount] = pc.getc();
+
+      serialCount++;
+
+      if(serialCount == 3)
+
+      {
+
+        serialInBuffer[serialCount] = '\0';
+
+        songname = (int) atoi(serialInBuffer);
+        
+        
         
         serialCount = 0;
 
@@ -137,7 +173,8 @@ void loadSong(void)
 play=1;
 }
 
-void loadSongHandler(void) {
+void loadSongHandler(void) 
+{
 
 queue.call(loadSong);
 
@@ -170,108 +207,7 @@ void playNote(int freq)
 
 }
 
-void ini_playNote(void) {  
-    
 
-    /*for(int i=0;i<42;i++)
-    { 
-      printf("song=%d\r\n",song[i]);
-      printf("length=%d\r\n",noteLength[i]);
-
-    }*/
-
-  int song1[]= {
-
-  261, 261, 392, 392, 440, 440, 392,
-
-  349, 349, 330, 330, 294, 294, 261,
-
-  392, 392, 349, 349, 330, 330, 294,
-
-  392, 392, 349, 349, 330, 330, 294,
-
-  261, 261, 392, 392, 440, 440, 392,
-
-  349, 349, 330, 330, 294, 294, 261};
-
-
-  int noteLength1[] = {
-
-  1, 1, 1, 1, 1, 1, 2,
-
-  1, 1, 1, 1, 1, 1, 2,
-
-  1, 1, 1, 1, 1, 1, 2,
-
-  1, 1, 1, 1, 1, 1, 2,
-
-  1, 1, 1, 1, 1, 1, 2,
-
-  1, 1, 1, 1, 1, 1, 2};
-
-
-
-    for(int i = 0; i < 42; i++)
-    {
-      printf("kick my ass\r\n");
-      printf("song=%d\r\n",song1[i]);
-      printf("length=%d\r\n",noteLength1[i]);
-      int length = noteLength1[i];
-      
-      while(length--)
-      {
-        // the loop below will play the note for the duration of 1s
-        for(int j = 0; j < kAudioSampleFrequency / kAudioTxBufferSize; ++j)
-        {
-          queue.call(printf, "song=%d \r\n",song1[i]);
-          queue.call(playNote, song1[i]); 
-          
-        }
-        if(length < 1) wait(1.0);
-      }
-    }
-
-    
-  }
-
-
-
-
-
-
-
-
-
-
-
-/*int song1[]= {
-
-  261, 261, 392, 392, 440, 440, 392,
-
-  349, 349, 330, 330, 294, 294, 261,
-
-  392, 392, 349, 349, 330, 330, 294,
-
-  392, 392, 349, 349, 330, 330, 294,
-
-  261, 261, 392, 392, 440, 440, 392,
-
-  349, 349, 330, 330, 294, 294, 261};
-
-
-int noteLength1[] = {
-
-  1, 1, 1, 1, 1, 1, 2,
-
-  1, 1, 1, 1, 1, 1, 2,
-
-  1, 1, 1, 1, 1, 1, 2,
-
-  1, 1, 1, 1, 1, 1, 2,
-
-  1, 1, 1, 1, 1, 1, 2,
-
-  1, 1, 1, 1, 1, 1, 2};*/
 
 
 
@@ -282,7 +218,9 @@ int main(void)
 {
   green_led = 1;
   
-  
+
+
+
   t.start(callback(&queue, &EventQueue::dispatch_forever));
 
 
@@ -292,6 +230,8 @@ int main(void)
   {
       if(play==1)
       {
+        uLCD.printf("\nsongname=%d\n",songname); //Default Green on black text
+
         for(int i=0;i<42;i++)
         {
           printf("song %d\r\n",song[i] );
@@ -319,6 +259,7 @@ int main(void)
       }
   
   play=0;
+  uLCD.cls();
   }
 
 

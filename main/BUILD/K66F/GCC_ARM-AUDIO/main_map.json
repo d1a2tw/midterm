@@ -1,5 +1,27 @@
 [
     {
+        "module": "4DGL-uLCD-SE/uLCD_4DGL_Text.o",
+        "size": {
+            ".text": 336,
+            ".data": 0,
+            ".bss": 0,
+            ".text-delta": 0,
+            ".data-delta": 0,
+            ".bss-delta": 0
+        }
+    },
+    {
+        "module": "4DGL-uLCD-SE/uLCD_4DGL_main.o",
+        "size": {
+            ".text": 786,
+            ".data": 0,
+            ".bss": 0,
+            ".text-delta": 0,
+            ".data-delta": 0,
+            ".bss-delta": 0
+        }
+    },
+    {
         "module": "DA7212/DA7212.o",
         "size": {
             ".text": 936,
@@ -13,7 +35,7 @@
     {
         "module": "[fill]",
         "size": {
-            ".text": 214,
+            ".text": 212,
             ".data": 7,
             ".bss": 48,
             ".text-delta": 0,
@@ -24,7 +46,7 @@
     {
         "module": "[lib]/c.a",
         "size": {
-            ".text": 31361,
+            ".text": 31609,
             ".data": 2472,
             ".bss": 89,
             ".text-delta": 0,
@@ -68,10 +90,10 @@
     {
         "module": "main.o",
         "size": {
-            ".text": 1414,
+            ".text": 1424,
             ".data": 0,
-            ".bss": 2874,
-            ".text-delta": 0,
+            ".bss": 3066,
+            ".text-delta": 8,
             ".data-delta": 0,
             ".bss-delta": 0
         }
@@ -90,7 +112,7 @@
     {
         "module": "mbed-os/drivers",
         "size": {
-            ".text": 1308,
+            ".text": 1284,
             ".data": 0,
             ".bss": 0,
             ".text-delta": 0,
@@ -123,7 +145,7 @@
     {
         "module": "mbed-os/platform",
         "size": {
-            ".text": 6210,
+            ".text": 6376,
             ".data": 261,
             ".bss": 309,
             ".text-delta": 0,
@@ -155,10 +177,10 @@
     },
     {
         "summary": {
-            "static_ram": 14016,
+            "static_ram": 14208,
             "static_ram_delta": 0,
-            "total_flash": 79390,
-            "total_flash_delta": 0
+            "total_flash": 80910,
+            "total_flash_delta": 8
         }
     }
 ]
