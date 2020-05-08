@@ -41,7 +41,7 @@ while(1):
     1, 1, 1, 1, 1, 1, 2,
     1, 1, 1, 1, 1, 1, 2 ]
 
-    print("Sending song ...")
+    print("Sending song1 ...")
     print("It may take about %d seconds ..." % (int(signalLength * waitTime)))
     for data in signalTable:
         s.write(bytes(formatter(data), 'UTF-8'))
@@ -84,7 +84,48 @@ while(1):
     1, 1, 1, 1, 1, 1, 1,
     1, 1, 1, 1, 1, 1, 1 ]
 
-    print("Sending song ...")
+    print("Sending song2 ...")
+    print("It may take about %d seconds ..." % (int(signalLength * waitTime)))
+    for data in signalTable:
+        s.write(bytes(formatter(data), 'UTF-8'))
+        time.sleep(waitTime)
+
+    print("Sending Length ...")
+    print("It may take about %d seconds ..." % (int(signalLength * waitTime)))
+
+    for data in noteLength:
+        s.write(bytes(formatter(data), 'UTF-8'))
+        time.sleep(waitTime)
+
+    print("Sending song index ...")
+    s.write(bytes(formatter(songname), 'UTF-8'))
+    time.sleep(waitTime)
+
+    s.close()
+    print("Signal sended")
+
+  if(index==3):
+
+    songname= 3
+    signalLength = 42
+
+    signalTable = [
+    659, 622, 659, 622, 659, 494, 554,
+    523, 440, 0  , 262, 330, 440, 494,
+    0  , 330, 415, 494, 523, 0, 659, 
+    622, 659, 622, 659, 494, 554,523, 
+    440, 0  , 262, 330, 440, 494, 0 ,
+    330, 415, 494, 523,   0 ,  0 ,0]
+
+    noteLength = [
+    1, 1, 1, 1, 1, 1, 1,
+    1, 2, 1, 1, 1, 2, 1,
+    1, 1, 1, 2, 1, 1, 1,
+    1, 1, 1, 1, 1, 2, 1,
+    1, 1, 2, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1 ]
+
+    print("Sending song 3...")
     print("It may take about %d seconds ..." % (int(signalLength * waitTime)))
     for data in signalTable:
         s.write(bytes(formatter(data), 'UTF-8'))
