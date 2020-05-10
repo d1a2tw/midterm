@@ -2,8 +2,9 @@ import numpy as np
 import serial
 import time
 
-waitTime = 0.1
+waitTime = 0.3
 
+information=1
 # generate the waveform table
 
 
@@ -13,15 +14,26 @@ formatter = lambda x: "%.3d" % x
 
 
 # send the waveform table to K66F
-serdev = '/dev/ttyACM0'
-s = serial.Serial(serdev)
+
+s = serial.Serial('/dev/ttyACM0',115200)
+
 while(1):
+  if(information==1):
+    print("available song list:\r\n")
+    print("song1\r\n")
+    print("song2\r\n")
+    print("song3\r\n")
+    print("wait for mbed calling to send song....")
+    information=0
+
+  
+
 
   line=s.readline()
   index=int(line)
 
   if(index==1):
-
+    information==1
     songname= 1
     signalLength = 42
 
@@ -58,13 +70,13 @@ while(1):
     s.write(bytes(formatter(songname), 'UTF-8'))
     time.sleep(waitTime)
 
-    s.close()
+    #s.close()
     print("Signal sended")
 
 
 
   if(index==2):
-
+    information==1
     songname= 2
     signalLength = 42
 
@@ -101,11 +113,11 @@ while(1):
     s.write(bytes(formatter(songname), 'UTF-8'))
     time.sleep(waitTime)
 
-    s.close()
+    #s.close()
     print("Signal sended")
 
   if(index==3):
-
+    information==1
     songname= 3
     signalLength = 42
 
@@ -142,5 +154,5 @@ while(1):
     s.write(bytes(formatter(songname), 'UTF-8'))
     time.sleep(waitTime)
 
-    s.close()
+    #s.close()
     print("Signal sended")
