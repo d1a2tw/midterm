@@ -90,7 +90,7 @@ void loadSong(void)
   uLCD.printf("loading song....\n\r");
  
 
-  while( i < songLength)
+  while( i < songLength)                      //////load song matrix from python
 
   {
     
@@ -122,7 +122,7 @@ void loadSong(void)
 
   }
   i=0;
-  while( i < songLength)
+  while( i < songLength)                //////load songlength matrix from python
 
   {
   
@@ -154,7 +154,7 @@ void loadSong(void)
   }
 
   i=0;
-  while( i < 1)
+  while( i < 1)                 //////load songname from python
 
   {
   
@@ -296,13 +296,13 @@ void gestureThread() {
 
 void cake()
 {
- // audio.spk.pause();
+ 
   uLCD.printf("mode selection (forward)or(backward)\r\n");
   int confirm=0;
   
   int ex_gest=-1;  // keep the last gesture in var   
   while (confirm==0) {
-   //while (true) { 
+   
      
     // Attempt to read new data from the accelerometer
     got_data = ReadAccelerometer(error_reporter, model_input->data.f,
