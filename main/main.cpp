@@ -1,8 +1,6 @@
 #include "mbed.h"
-#include <cmath>
-#include "DA7212.h"
 #include "uLCD_4DGL.h"
-
+#include "DA7212/DA7212.h"
 
 #include "accelerometer_handler.h"
 #include "config.h"
@@ -16,7 +14,7 @@
 #include "tensorflow/lite/schema/schema_generated.h"
 #include "tensorflow/lite/version.h"
 
-
+DA7212 audio;
 
 
 
@@ -25,21 +23,19 @@
 #define songLength (42)
 
 
-DA7212 audio;
-
+Serial pc(USBTX, USBRX);
+uLCD_4DGL uLCD(D1, D0, D2);
 InterruptIn button(SW2);
 
 InterruptIn button3(SW3);
 
 DigitalOut green_led(LED2);
 
-uLCD_4DGL uLCD(D1, D0, D2);
+
 
 int16_t waveform[kAudioTxBufferSize];
-Serial pc(USBTX, USBRX);
-EventQueue queue(32 * EVENTS_EVENT_SIZE);
-//Thread t; 
-Thread t(osPriorityNormal, 120* 1024 /*120K stack size*/);
+
+
 
 int song[42] ;
 int noteLength[42];
@@ -52,21 +48,31 @@ int playindex = 0;
 
 
 
+constexpr int kTensorArenaSize = 60 * 1024;
+uint8_t tensor_arena[kTensorArenaSize];
+bool should_clear_buffer = false;
+bool got_data = false;
+int gesture_index;
+static tflite::MicroErrorReporter micro_error_reporter;
+tflite::ErrorReporter *error_reporter;
+const tflite::Model *model;
+static tflite::MicroOpResolver<6> micro_op_resolver;
+tflite::MicroInterpreter *interpreter;
+TfLiteTensor *model_input;
+int input_length;
 
 
 
 
 
+Thread t; 
+Thread t_gesture;
+Thread t1; 
 
+EventQueue queue(32 * EVENTS_EVENT_SIZE);
+EventQueue queue1(32 * EVENTS_EVENT_SIZE);
 
-
-
-
-
-
-
-
-
+Timer buttontimer;
 
 void loadSong(void)
 
@@ -81,7 +87,8 @@ void loadSong(void)
 
   
   uLCD.cls();
-  audio.spk.pause();
+  uLCD.printf("loading song....\n\r");
+ 
 
   while( i < songLength)
 
@@ -104,7 +111,7 @@ void loadSong(void)
 
         song[i] = (int) atoi(serialInBuffer);
         
-        uLCD.printf("i=%d,song=%d\n\r",i,song[i]);
+        //uLCD.printf("i=%d,song=%d\n\r",i,song[i]);
         serialCount = 0;
 
         i++;
@@ -135,7 +142,7 @@ void loadSong(void)
         serialInBuffer[serialCount] = '\0';
 
         noteLength[i] = (int) atoi(serialInBuffer);
-        uLCD.printf("i=%d,length=%d\n\r",i,noteLength[i]);
+        //uLCD.printf("i=%d,length=%d\n\r",i,noteLength[i]);
         serialCount = 0;
 
         i++;
@@ -168,7 +175,7 @@ void loadSong(void)
 
         songname = (int) atoi(serialInBuffer);
         
-        uLCD.printf("songname%d\n\r",songname);
+        //uLCD.printf("songname%d\n\r",songname);
         
         serialCount = 0;
 
@@ -183,10 +190,11 @@ void loadSong(void)
   
 
 
-
-
- green_led = 1;
+uLCD.printf("load song%d success\n\r",songname);
+wait(0.5);
+green_led = 1;
 play=1;   
+
 }
 
 
@@ -260,95 +268,42 @@ int PredictGesture(float* output) {
 }
 
 
-int fuck() {
+void gestureThread() {
+	while(true) {
+		got_data = ReadAccelerometer(error_reporter, model_input->data.f, input_length, should_clear_buffer);
 
-  // Create an area of memory to use for input, output, and intermediate arrays.
-  // The size of this will depend on the model you're using, and may need to be
-  // determined by experimentation.
-  constexpr int kTensorArenaSize = 60 * 1024;
-  uint8_t tensor_arena[kTensorArenaSize];
+		if (!got_data)
+		{
+			should_clear_buffer = false;
+			continue;
+		}
 
-  // Whether we should clear the buffer next time we fetch data
-  bool should_clear_buffer = false;
-  bool got_data = false;
+		TfLiteStatus invoke_status = interpreter->Invoke();
+		if (invoke_status != kTfLiteOk)
+		{
+			error_reporter->Report("Invoke failed on index: %d\n", begin_index);
+			continue;
+		}
 
-  // The gesture index of the prediction
-  int gesture_index;
+		gesture_index = PredictGesture(interpreter->output(0)->data.f);
 
-  // Set up logging.
-  static tflite::MicroErrorReporter micro_error_reporter;
-  tflite::ErrorReporter* error_reporter = &micro_error_reporter;
-
-  // Map the model into a usable data structure. This doesn't involve any
-  // copying or parsing, it's a very lightweight operation.
-  const tflite::Model* model = tflite::GetModel(g_magic_wand_model_data);
-  if (model->version() != TFLITE_SCHEMA_VERSION) {
-   // error_reporter->Report(
-   //     "Model provided is schema version %d not equal "
-   //     "to supported version %d.",
-   //     model->version(), TFLITE_SCHEMA_VERSION);
-    return -1;
-  }
-
-  // Pull in only the operation implementations we need.
-  // This relies on a complete list of all the ops needed by this graph.
-  // An easier approach is to just use the AllOpsResolver, but this will
-  // incur some penalty in code space for op implementations that are not
-  // needed by this graph.
-  static tflite::MicroOpResolver<6> micro_op_resolver;
-  micro_op_resolver.AddBuiltin(
-      tflite::BuiltinOperator_DEPTHWISE_CONV_2D,
-      tflite::ops::micro::Register_DEPTHWISE_CONV_2D());
-  micro_op_resolver.AddBuiltin(tflite::BuiltinOperator_MAX_POOL_2D,
-                               tflite::ops::micro::Register_MAX_POOL_2D());
-  micro_op_resolver.AddBuiltin(tflite::BuiltinOperator_CONV_2D,
-                               tflite::ops::micro::Register_CONV_2D());
-  micro_op_resolver.AddBuiltin(tflite::BuiltinOperator_FULLY_CONNECTED,
-                               tflite::ops::micro::Register_FULLY_CONNECTED());
-  micro_op_resolver.AddBuiltin(tflite::BuiltinOperator_SOFTMAX,
-                               tflite::ops::micro::Register_SOFTMAX());
-  micro_op_resolver.AddBuiltin(tflite::BuiltinOperator_RESHAPE,
-                             tflite::ops::micro::Register_RESHAPE(), 1);
-  // Build an interpreter to run the model with
-  static tflite::MicroInterpreter static_interpreter(
-      model, micro_op_resolver, tensor_arena, kTensorArenaSize, error_reporter);
-  tflite::MicroInterpreter* interpreter = &static_interpreter;
+		should_clear_buffer = gesture_index < label_num;
 
 
-  // Allocate memory from the tensor_arena for the model's tensors
-  interpreter->AllocateTensors();
+	}
+}
 
-  // Obtain pointer to the model's input tensor
-  TfLiteTensor* model_input = interpreter->input(0);
 
-  
-  
-  ///////////////////////////////////////////////////////////////////////////////////////////////////// BROKE
-  
-  if ((model_input->dims->size != 4) || (model_input->dims->data[0] != 1) ||
-      (model_input->dims->data[1] != config.seq_length) ||
-      (model_input->dims->data[2] != kChannelNumber) ||
-      (model_input->type != kTfLiteFloat32)) {
-    error_reporter->Report("Bad input tensor parameters in model");
-    return -1;
-  }
-  //////////////////////////////////////////////////////////////////////Bad input tensor parameters for the second run
-  int input_length = model_input->bytes / sizeof(float);
-
-  TfLiteStatus setup_status = SetupAccelerometer(error_reporter);
-  if (setup_status != kTfLiteOk) {
-    //error_reporter->Report("Set up failed\n");
-    uLCD.printf("Set up failed\n");
-    return -1;
-  }
-  
-  //error_reporter->Report("Set up successful...\n");
-  uLCD.printf("Set up successful...\n");
+void cake()
+{
+ // audio.spk.pause();
+  uLCD.printf("mode selection (forward)or(backward)\r\n");
   int confirm=0;
+  
   int ex_gest=-1;  // keep the last gesture in var   
   while (confirm==0) {
-    
- 
+   //while (true) { 
+     
     // Attempt to read new data from the accelerometer
     got_data = ReadAccelerometer(error_reporter, model_input->data.f,
                                  input_length, should_clear_buffer);
@@ -380,31 +335,32 @@ int fuck() {
     //}
     if(gesture_index==0){         //*******mode0
       uLCD.cls();
-      uLCD.printf("\r\nmode0\r\n");
-      ex_gest=0;
+      uLCD.printf("\r\nforward\r\n");
+      int a=0;
+      ex_gest=0; 
     }
     if(gesture_index==1){         // ********mode1
       uLCD.cls();
-      uLCD.printf("\r\nmode1\r\n");
-      ex_gest=1;
+      uLCD.printf("\r\nbackward\r\n");
+      int a=0;
+      ex_gest=1; 
     }
 
-
+  
     if(button3==0){                 //*************if pressed SW3 -> confirm and stop prediction
-      //printf("%d\r\n",ex_gest);
       confirm=1;}    
 
   }
   
-  
 
+  
 
   int kk=ex_gest;     // kk=0 for forward  , =1 for backward
   int play_index=-1;
   int jj=songname+1;  // next song
   int ii=songname-1;  // previous song
 
-
+  
 
 
   if(kk==0){
@@ -412,7 +368,7 @@ int fuck() {
     else{play_index=jj;}
   
     uLCD.printf("hello you choose mode0(forward)\r\n");
-  
+    
     printf("%d\r\n",play_index);
   
   }
@@ -422,100 +378,138 @@ int fuck() {
     if(ii<1){play_index=3;}
     else{play_index=ii;}
     uLCD.printf("hello you choose mode1(backward)\r\n");
-  
+    
     printf("%d\r\n",play_index);
          
   }
+  
+  
 
 
-
-
-
-
-
-  return ex_gest;         // return mode choosed
-
-  //delete tensor_arena;
-  //free(model_input) ;
 }
 
-
-
-
-void mode_selection(void){
-  
-  uLCD.printf("mode selection (forward)or(backward)\r\n");
-
-  
- 
-  fuck();          // kk=0 for foward song , kk=1 for backward song 
-  
-  
-
-  
-  
-  /*
-  playindex=1;         //index = load which song
-  printf("%d\n",playindex);  
-  */
-
- 
-  loadSong();
- 
- 
-}
-
-
-
-
-
-
-int main(void)
+void gogogo()
 {
-  green_led = 1;
-  pc.baud(115200);
+  if(buttontimer.read_ms() > 1000)
+  {
+    buttontimer.reset();
+    uLCD.cls();
+    queue.call(cake);
+    queue.call(loadSong);
 
-  
-  t.start(callback(&queue, &EventQueue::dispatch_forever));
-
-
-  button.rise(queue.event(mode_selection));  // button 1 load song 1
-
-
-  
-  while(1)
-  {   
-
-     
-      if(play==1)
-      {
-        
-        uLCD.printf("\nsongname=%d\n",songname); //Default Green on black text
-
-        
-        for(int i = 0; i < 42; i++)
-        {
-
-          int length = noteLength[i];
-
-          while(length--)
-
-          { 
-      
-            queue.call(playNote, song[i]);  
-
-            if(length <= 1) wait(1.0);
-
-          }
-
-        }
-       
-      }
-  
-  play=0;
-  //uLCD.cls();
-  
   }
 
-  
 }
+
+
+void playsong()
+
+{
+
+      if(play==1)
+      {
+
+          uLCD.printf("\nnow playing\r\nsongname=%d\n",songname); //Default Green on black text
+
+        
+          for(int i = 0; i < 42; i++)
+          {
+
+            int length = noteLength[i];
+
+            while(length--)
+
+            { 
+            
+              queue1.call(playNote, song[i]);  
+
+              if(length <= 1) wait(1.0);
+
+            }
+
+          }
+      
+        play=0;
+        uLCD.cls();
+
+
+
+        
+
+      
+      }      
+
+
+  
+
+}
+
+
+int main()
+{
+  buttontimer.start();
+  /////////////////////////////////////////////////////////////
+ 
+	error_reporter = &micro_error_reporter;
+	model = tflite::GetModel(g_magic_wand_model_data);
+	if (model->version() != TFLITE_SCHEMA_VERSION)
+	{
+		error_reporter->Report(
+			"Model provided is schema version %d not equal "
+			"to supported version %d.",
+			model->version(), TFLITE_SCHEMA_VERSION);
+		return -1;
+	}
+	micro_op_resolver.AddBuiltin(tflite::BuiltinOperator_DEPTHWISE_CONV_2D, tflite::ops::micro::Register_DEPTHWISE_CONV_2D());
+	micro_op_resolver.AddBuiltin(tflite::BuiltinOperator_MAX_POOL_2D, tflite::ops::micro::Register_MAX_POOL_2D());
+	micro_op_resolver.AddBuiltin(tflite::BuiltinOperator_CONV_2D, tflite::ops::micro::Register_CONV_2D());
+	micro_op_resolver.AddBuiltin(tflite::BuiltinOperator_FULLY_CONNECTED, tflite::ops::micro::Register_FULLY_CONNECTED());
+	micro_op_resolver.AddBuiltin(tflite::BuiltinOperator_SOFTMAX, tflite::ops::micro::Register_SOFTMAX());
+	micro_op_resolver.AddBuiltin(tflite::BuiltinOperator_RESHAPE, tflite::ops::micro::Register_RESHAPE(), 1);
+	static tflite::MicroInterpreter static_interpreter(model, micro_op_resolver, tensor_arena, kTensorArenaSize, error_reporter);
+	interpreter = &static_interpreter;
+	interpreter->AllocateTensors();
+	model_input = interpreter->input(0);
+	if ((model_input->dims->size != 4) || (model_input->dims->data[0] != 1) ||
+		(model_input->dims->data[1] != config.seq_length) ||
+		(model_input->dims->data[2] != kChannelNumber) ||
+		(model_input->type != kTfLiteFloat32))
+	{
+		error_reporter->Report("Bad input tensor parameters in model");
+		return -1;
+	}
+	input_length = model_input->bytes / sizeof(float);
+	TfLiteStatus setup_status = SetupAccelerometer(error_reporter);
+	if (setup_status != kTfLiteOk) {
+		error_reporter->Report("Set up failed\n");
+		return -1;
+	}
+	//error_reporter->Report("Set up successful...\n");
+  uLCD.printf("Set up successful...\n");
+ 
+//////////////////////////////////////////////////////////////////////////////////////
+
+
+  green_led = 1;
+  
+  pc.baud(115200);
+  
+  t.start(callback(&queue, &EventQueue::dispatch_forever));
+  
+  t1.start(callback(&queue1, &EventQueue::dispatch_forever));
+
+
+  uLCD.printf("songlist\r\n");
+  uLCD.printf("song1\r\n");
+  uLCD.printf("song2\r\n");
+  uLCD.printf("song3\r\n");
+  uLCD.printf("no song in mbed yet , plz load for playing\r\n");
+
+  button.rise(queue.event(gogogo));
+  while(1)
+  {
+    playsong();
+  }
+
+}
+

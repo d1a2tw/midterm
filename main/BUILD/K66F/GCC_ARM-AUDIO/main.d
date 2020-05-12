@@ -238,7 +238,8 @@ BUILD/K66F/GCC_ARM-AUDIO/main.o: main.cpp \
  /home/ee2405/ee2405/mbed-os/platform/mbed_stats.h \
  /home/ee2405/ee2405/mbed-os/platform/Callback.h \
  /home/ee2405/ee2405/mbed-os/platform/FunctionPointer.h \
- /home/ee2405/ee2405/mbed-os/platform/ScopedLock.h DA7212/DA7212.h \
+ /home/ee2405/ee2405/mbed-os/platform/ScopedLock.h \
+ 4DGL-uLCD-SE/uLCD_4DGL.h DA7212/DA7212.h \
  /home/ee2405/ee2405/mbed-os-build/targets/TARGET_Freescale/TARGET_MCUXpresso_MCUS/TARGET_K66F/TARGET_FRDM/fsl_clock_config.h \
  /home/ee2405/ee2405/mbed-os-build/targets/TARGET_Freescale/TARGET_MCUXpresso_MCUS/TARGET_K66F/drivers/fsl_common.h \
  /home/ee2405/ee2405/mbed-os-build/targets/TARGET_Freescale/TARGET_MCUXpresso_MCUS/TARGET_K66F/drivers/fsl_dmamux.h \
@@ -250,8 +251,7 @@ BUILD/K66F/GCC_ARM-AUDIO/main.o: main.cpp \
  /home/ee2405/ee2405/mbed-os-build/targets/TARGET_Freescale/TARGET_MCUXpresso_MCUS/TARGET_K66F/drivers/fsl_sai_edma.h \
  /home/ee2405/ee2405/mbed-os-build/targets/TARGET_Freescale/TARGET_MCUXpresso_MCUS/TARGET_K66F/drivers/fsl_sai.h \
  /home/ee2405/ee2405/mbed-os-build/targets/TARGET_Freescale/TARGET_MCUXpresso_MCUS/TARGET_K66F/drivers/fsl_edma.h \
- 4DGL-uLCD-SE/uLCD_4DGL.h accelerometer_handler.h \
- tensorflowlite_mbed/tensorflow/lite/c/common.h \
+ accelerometer_handler.h tensorflowlite_mbed/tensorflow/lite/c/common.h \
  tensorflowlite_mbed/tensorflow/lite/micro/micro_error_reporter.h \
  tensorflowlite_mbed/tensorflow/lite/core/api/error_reporter.h \
  tensorflowlite_mbed/tensorflow/lite/micro/compatibility.h \
