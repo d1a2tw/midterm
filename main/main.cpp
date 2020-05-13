@@ -294,6 +294,9 @@ void gestureThread() {
 }
 
 
+
+
+
 void cake()
 {
  
@@ -395,6 +398,102 @@ void gogogo()
     buttontimer.reset();
     uLCD.cls();
     queue.call(cake);
+    queue.call(loadSong);
+
+  }
+
+}
+
+
+void cake1()
+{
+  int index=1;
+  uLCD.printf("song selection \r\n");
+  uLCD.printf("now loading song%d?",index);
+  
+  int confirm=0;
+  
+  int ex_gest=-1;  // keep the last gesture in var   
+  while (confirm==0) {
+   
+     
+    // Attempt to read new data from the accelerometer
+    got_data = ReadAccelerometer(error_reporter, model_input->data.f,
+                                 input_length, should_clear_buffer);
+
+    // If there was no new data,
+    // don't try to clear the buffer again and wait until next time
+    if (!got_data) {
+      should_clear_buffer = false;
+      continue;
+    }
+
+    // Run inference, and report any error
+    TfLiteStatus invoke_status = interpreter->Invoke();
+    if (invoke_status != kTfLiteOk) {
+     // error_reporter->Report("Invoke failed on index: %d\n", begin_index);
+      continue;
+    }
+
+    // Analyze the results to obtain a prediction
+    gesture_index = PredictGesture(interpreter->output(0)->data.f);
+
+    // Clear the buffer next time we read data
+    should_clear_buffer = gesture_index < label_num;
+
+    // Produce an output
+    //if (gesture_index < label_num) {
+    //  error_reporter->Report(config.output_message[gesture_index]);
+    //
+    //}
+    if(gesture_index==0){         //*******mode0
+      uLCD.cls();
+      if((index+1)>3){index=1;}
+      else{index=index+1;}
+      uLCD.printf("now loading song%d?",index);
+      int a=0;
+      ex_gest=0; 
+    }
+    if(gesture_index==1){         // ********mode1
+      uLCD.cls();
+      if((index-1)<1){index=3;}
+      else{index=index-1;}
+      uLCD.printf("now loading song%d?",index);
+      int a=0;
+      ex_gest=1; 
+    }
+
+  
+    if(button3==0){                 //*************if pressed SW3 -> confirm and stop prediction
+      confirm=1;}    
+
+  }
+  
+
+  
+
+  printf("%d\r\n",index);
+
+  
+
+  
+ 
+
+
+ 
+  
+
+
+}
+
+
+void gogogo1()
+{
+  if(buttontimer.read_ms() > 1000)
+  {
+    buttontimer.reset();
+    uLCD.cls();
+    queue.call(cake1);
     queue.call(loadSong);
 
   }
@@ -506,6 +605,7 @@ int main()
   uLCD.printf("no song in mbed yet , plz load for playing\r\n");
 
   button.rise(queue.event(gogogo));
+  button3.rise(queue.event(gogogo1));
   while(1)
   {
     playsong();
